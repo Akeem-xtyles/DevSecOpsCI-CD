@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: This template creates an EC2 instance, an S3 bucket, an SES email identity, and a security group.
+
+Parameters:
+  KMSKeyarn:
+    Type: String
+    Description: "The ARN of the KMS key to use for S3 bucket encryption."
+
+  ImageID:
+    Type: String
+    Description: "The ID of the Amazon Machine Image (AMI) to use for the EC2 instance."
+
+  BucketName:
+    Type: String
+    Description: "The name of the S3 bucket to create."
+
+Resources:
+  EC2Instance:
+    Type: AWS::EC2::Instance
+    Properties: 
+      InstanceType: "t2.micro"
+      ImageId: !Ref ImageID
+      SecurityGroupIds: 
+        - !Ref MySecurityGroup
+      Tags: 
+        - Key: "IaC"
+          Value: "CloudFormation"
+  
+  MySecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: "For HTTP ingress"
+      SecurityGroupIngress: 
+        - IpProtocol: "tcp"
+          FromPort: 80
+          ToPort: 80
+          CidrIp: "0.0.0.0/0"
+  
+  MySES:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: "keemogundipe@gmail.com"
+
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption: 
+        ServerSideEncryptionConfiguration: 
+          - ServerSideEncryptionRule:
+              ApplyServerSideEncryptionByDefault:
+                SSEAlgorithm: "aws:kms"
+                KMSMasterKeyID: !Ref KMSKeyarn
+      BucketName: !Ref BucketName
+      VersioningConfiguration:
+        Status: "Enabled"
