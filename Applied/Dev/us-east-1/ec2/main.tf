@@ -8,7 +8,7 @@ resource "aws_instance" "my_first_instance"{
             ami = "ami-066784287e358dad1"
             instance_type = "t2.small"
         }
-        instance1 = {
+        instance3 = {
             ami = "ami-066784287e358dad1"
             instance_type = "t2.medium"
         }
