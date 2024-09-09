@@ -11,7 +11,7 @@ resource "aws_instance" "my_first_instance"{
         instance3 = {
             ami = "ami-066784287e358dad1"
             instance_type = "t2.medium"
-        }
+        } 
     }
 
     instance_type = each.value.instance_type
