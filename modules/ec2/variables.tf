@@ -1,9 +1,9 @@
 variable "instance_type" {
-    type = string
+    type = list(string)
     description = "The type of ec2 instance"
 }
 
-variable "ami" {
+variable "ami_id" {
     type = string
     description = "The ami ID for the ec2 instance"
 }
