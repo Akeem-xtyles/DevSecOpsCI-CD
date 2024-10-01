@@ -1,5 +1,5 @@
 module "iam" {
-    source = "../../../..//modules/iam"
+    source = "../..//modules/iam"
 
     group_name = "Project_Union_Group"
     policy_name = "Project_Union_group_policy"
