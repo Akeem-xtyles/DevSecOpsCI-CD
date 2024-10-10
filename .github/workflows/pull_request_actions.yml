@@ -1,0 +1,100 @@
+name: Terraform plan and apply
+on:
+  pull_request:
+    branches:
+      - main
+  push:
+    branches:
+      - main
+concurrency: project-union
+
+env:
+  TERRAGRUNT_NON_INTERACTIVE: true
+  TERRAGRUNT_VERSION: "0.55.2"
+  TERRAFORM_VERSION: "1.1.7"
+  TERRAFORM_WORKING_DIR: './applied/dev/us-east-1'
+
+permissions:
+  contents: write
+  id-token: write
+  issues: write
+  pull-requests: write
+
+jobs:
+  plan:
+    name: "Terragrunt Init, and Plan"
+    runs-on: ubuntu-20.04
+    if: github.event_name == 'pull_request'
+    defaults:
+      run:
+        working-directory : ${{ env.TERRAFORM_WORKING_DIR }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+        with:
+           ref: ${{ github.event.pull_request.head.ref }}
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: true
+
+      - name: Install Terragrunt
+        uses: autero1/action-terragrunt@v3
+        with:
+          terragrunt-version: ${{ env.TERRAGRUNT_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Terragrunt Init
+        id: init
+        run: terragrunt run-all init
+
+      - name: Terragrunt Plan
+        id: plan
+        run: terragrunt run-all plan
+
+  apply:
+    name: "Terragrunt Apply"
+    runs-on: ubuntu-20.04
+    needs: [ plan ]
+    if: github.event_name == 'push'
+    defaults:
+      run:
+        working-directory : ${{ env.TERRAFORM_WORKING_DIR }}
+    steps:
+      - name: "Checkout"
+        uses: actions/checkout@v4
+
+      - name: Install Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TERRAFORM_VERSION }}
+          terraform_wrapper: true
+
+      - name: Install Terragrunt
+        uses: autero1/action-terragrunt@v3
+        with:
+          terragrunt-version: ${{ env.TERRAGRUNT_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Terragrunt Init
+        id: init
+        run: terragrunt run-all init
+        
+      - name: Terragrunt Apply
+        id: apply
+        run: terragrunt run-all apply
+        continue-on-error: true
